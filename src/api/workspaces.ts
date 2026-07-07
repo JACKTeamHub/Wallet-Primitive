@@ -11,7 +11,7 @@ export const workspacesApi = {
       .then((r) => r.data),
 
   login: (payload: { email: string; password?: string }) =>
-    client.post<{ pending: true }>("/workspaces/login", payload).then((r) => r.data),
+    client.post<{ access_token: string; workspaceId: string }>("/workspaces/login", payload).then((r) => r.data),
 
   verifyLogin: (payload: { email: string; otp: string }) =>
     client

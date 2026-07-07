@@ -68,6 +68,7 @@ export default function SignupPage() {
             inputMode="numeric"
             maxLength={6}
             placeholder="000000"
+            autoComplete="one-time-code"
             error={otpForm.formState.errors.otp?.message}
             {...otpForm.register("otp")}
           />
