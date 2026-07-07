@@ -37,7 +37,7 @@ function normalizeWallet(raw: RawRecord): Wallet {
       tier: raw.kycTier ?? "TIER_1",
       bvn: raw.bvn,
       nin: raw.nin,
-      proofOfAddress: Boolean(raw.proofOfAddress),
+      proofOfAddress: raw.kycTier === "TIER_3" || Boolean(raw.proofOfAddress),
     },
   } as Wallet;
 }
@@ -98,12 +98,13 @@ export const walletsApi = {
   updateStatus: (id: string, status: WalletStatus) =>
     client.patch<RawRecord>(`/wallets/${id}/status`, { status }).then((r) => normalizeWallet(r.data)),
 
-  updateKyc: (id: string, kyc: Partial<KYCDetails>) =>
+  updateKyc: (id: string, kyc: Partial<KYCDetails> & { proofOfAddress?: boolean }) =>
     client
       .patch<RawRecord>(`/wallets/${id}/kyc`, {
         kycTier: kyc.tier,
         bvn: kyc.bvn,
         nin: kyc.nin,
+        proofOfAddress: kyc.proofOfAddress,
       })
       .then((r) => normalizeWallet(r.data)),
 

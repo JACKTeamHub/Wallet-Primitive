@@ -43,22 +43,38 @@ export default function AuditLogsPage() {
               </table>
             </div>
 
-            {/* Mobile Stacked Card view (under md) */}
-            <div className="grid grid-cols-1 gap-4 md:hidden">
-              {data.data.map((log) => (
-                <div
-                  key={log.id}
-                  className="rounded-xl border border-white/5 bg-ink-800 p-4 flex flex-col gap-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-paper-100 text-sm">{log.actor}</span>
-                    <span className="text-3xs text-paper-200/40">{new Date(log.createdAt).toLocaleString()}</span>
-                  </div>
-                  <div className="text-3xs font-mono text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded self-start border border-blue-500/10">
-                    {log.action}
-                  </div>
-                </div>
-              ))}
+            {/* Mobile Timeline view (under md) */}
+            <div className="md:hidden px-2 py-1">
+              <div className="relative border-l border-white/5 pl-4 ml-2 space-y-6">
+                {data.data.map((log) => {
+                  const act = log.action || "";
+                  let dotColor = "bg-blue-500";
+                  if (act.includes("CREATE") || act.includes("GENERATE") || act.includes("ONBOARD")) {
+                    dotColor = "bg-signal-green";
+                  } else if (act.includes("DELETE") || act.includes("REVOKE") || act.includes("REJECT") || act.includes("REMOVE")) {
+                    dotColor = "bg-signal-red";
+                  } else if (act.includes("LOGIN")) {
+                    dotColor = "bg-amber-500";
+                  }
+
+                  return (
+                    <div key={log.id} className="relative group">
+                      {/* Timeline Dot */}
+                      <span className={`absolute -left-[21px] top-1.5 flex h-2.5 w-2.5 rounded-full ring-4 ring-ink-950 ${dotColor}`} />
+                      
+                      <div className="flex flex-col gap-1">
+                        <span className="font-mono text-xs font-semibold text-paper-100 break-all select-all">
+                          {log.action}
+                        </span>
+                        <div className="text-3xs text-paper-200/50 flex flex-col gap-0.5">
+                          <span className="break-all font-medium text-paper-200/70">{log.actor}</span>
+                          <span className="text-paper-200/30">{new Date(log.createdAt).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}

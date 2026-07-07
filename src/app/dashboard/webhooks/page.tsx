@@ -6,6 +6,52 @@ import { webhooksApi } from "@/api/webhooks";
 import { TableSkeleton, EmptyState, ErrorState } from "@/components/ui/AsyncStates";
 import { cn } from "@/utils/cn";
 
+function syntaxHighlightJson(obj: any) {
+  const json = JSON.stringify(obj, null, 2);
+  const lines = json.split("\n");
+  
+  return lines.map((line, i) => {
+    // Match key-value structure
+    const match = line.match(/^(\s*)(".*?")(\s*:\s*)(.*)$/);
+    if (match && match[4] !== undefined) {
+      const indent = match[1] || "";
+      const key = match[2] || "";
+      const colon = match[3] || "";
+      const value = match[4];
+      
+      let highlightedValue: React.ReactNode = value;
+      const cleanValue = value.trim().replace(/,$/, "");
+      const hasComma = value.endsWith(",");
+      
+      if (cleanValue.startsWith('"')) {
+        highlightedValue = <span className="text-emerald-400">{cleanValue}</span>;
+      } else if (cleanValue === "true" || cleanValue === "false") {
+        highlightedValue = <span className="text-purple-400">{cleanValue}</span>;
+      } else if (cleanValue === "null") {
+        highlightedValue = <span className="text-paper-400/50">{cleanValue}</span>;
+      } else if (!isNaN(Number(cleanValue))) {
+        highlightedValue = <span className="text-blue-400">{cleanValue}</span>;
+      }
+      
+      return (
+        <div key={i} className="leading-5">
+          <span>{indent}</span>
+          <span className="text-amber-400">{key}</span>
+          <span>{colon}</span>
+          {highlightedValue}
+          {hasComma && <span>,</span>}
+        </div>
+      );
+    }
+    
+    return (
+      <div key={i} className="leading-5">
+        {line}
+      </div>
+    );
+  });
+}
+
 export default function WebhooksPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data, isPending, isError, error } = useQuery({
@@ -66,8 +112,8 @@ export default function WebhooksPage() {
           {selected ? (
             <div className="space-y-2">
               <span className="text-3xs font-semibold text-paper-200/40 uppercase tracking-wider block">Raw Webhook JSON</span>
-              <pre className="max-h-96 overflow-auto rounded-xl border border-white/10 bg-ink-950 p-4 font-mono text-2xs text-paper-100 shadow-inner">
-                {JSON.stringify({
+              <pre className="max-h-[500px] overflow-x-auto whitespace-pre-wrap break-all rounded-xl border border-white/10 bg-ink-950 p-4 font-mono text-[10px] md:text-2xs text-paper-100 shadow-inner select-all">
+                {syntaxHighlightJson({
                   event_type: "payment_success",
                   requestId: `req_${selected.id.slice(0, 8)}`,
                   data: {
@@ -82,7 +128,7 @@ export default function WebhooksPage() {
                       time: selected.processedAt
                     }
                   }
-                }, null, 2)}
+                })}
               </pre>
             </div>
           ) : (

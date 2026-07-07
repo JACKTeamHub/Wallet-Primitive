@@ -13,26 +13,25 @@ Next.js 15 (App Router) · TypeScript strict · Tailwind · TanStack Query · Fr
 - **Auth** (`src/app/(auth)`): signup and login, each a two-step email → OTP flow,
   React Hook Form + Zod validated, calling the workspaces auth endpoints. No JWT in
   localStorage — cookies are `withCredentials` on the Axios client.
-- **Dashboard shell** (`src/app/dashboard`): sidebar-nested layout with one route per
-  backend module — overview, customers, wallets, temporary accounts, webhooks,
-  analytics, audit logs, reconciliation, settings (credentials, API keys, webhook
-  simulator). Every list view has a loading skeleton, an empty state, and an error
-  state, wired through TanStack Query against the typed Axios clients in `src/api`.
-- **API layer** (`src/api`): one file per backend module, matching every endpoint in
-  the spec 1:1. All amounts are typed as integer kobo (`src/types/domain.ts`).
+- **Dashboard & Core Console Features** (`src/app/dashboard`):
+  * **Overview & Analytics**: Interactive charts showing daily transaction volumes and chronological 7-day volumetric activity.
+  * **Wallets & Ledgers**: Deep-dive details for customer wallets, full double-entry transaction ledgers, transfer modals, and CBN KYC compliance verification (Tier 1/2/3).
+  * **Temporary Checkout Accounts**: Create, configure, and monitor temporary accounts for incoming checkout flows.
+  * **Reconciliation & Quarantine**: View quarantined funds and execute admin overrides to either `release` or `reject` funds.
+  * **Webhook Simulator**: Trigger sandbox payment notifications for customer wallets and active temporary checkout accounts.
+  * **Webhooks & Audit Logs**: Interactive list of inbound webhook notifications with color-coded, formatted JSON payloads, alongside a responsive audit timeline tracking developer console actions.
 
-## Not yet built (flagged for a follow-up pass)
+## 👥 Demo Logins & Test Accounts
 
-- Wallet detail page (ledger table, statement date-range picker defaulting to last
-  30 days, PDF statement download, transfer flow, KYC tier editor with NIN/BVN/proof-
-  of-address inputs).
-- Temporary account creation modal and detail page.
-- Customer detail page + rename flow.
-- Quarantine ledger view.
-- Toast notifications, confirmation dialogs for destructive actions (revoke key,
-  freeze wallet), and keyboard-nav polish across tables.
-- Dark/light toggle control in the UI (the provider is wired, but there's no switch
-  yet).
+You can log in to the **Developer Console Web UI** using the following pre-seeded workspace accounts:
+
+* **Password for all accounts**: `password123`
+* **Workspace Emails**:
+  * 🍔 **Chowdeck**: `dev@chowdeck.com`
+  * 🛍️ **Jumia**: `dev@jumia.com`
+  * 🚚 **GIG Logistics**: `dev@giglogistics.com`
+
+---
 
 ## Running it
 

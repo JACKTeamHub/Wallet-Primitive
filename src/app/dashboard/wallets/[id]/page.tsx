@@ -167,19 +167,23 @@ export default function WalletDetailPage({ params: paramsPromise }: { params: Pr
 
   const handleKycUpdate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedTier === "TIER_2" && !bvn) {
-      toast("BVN is required for Tier 2", "error");
-      return;
+    if (selectedTier === "TIER_2" || selectedTier === "TIER_3") {
+      if (!bvn.trim() || !nin.trim()) {
+        toast("Both BVN and NIN are required for this KYC level", "error");
+        return;
+      }
     }
-    if (selectedTier === "TIER_3" && (!bvn || !nin || !proofOfAddress)) {
-      toast("BVN, NIN and Proof of Address are required for Tier 3", "error");
-      return;
+    if (selectedTier === "TIER_3") {
+      if (!proofOfAddress) {
+        toast("Proof of Address document verification is required for Tier 3", "error");
+        return;
+      }
     }
 
     kycMutation.mutate({
       tier: selectedTier,
-      bvn: bvn || undefined,
-      nin: nin || undefined,
+      bvn: bvn.trim() || undefined,
+      nin: nin.trim() || undefined,
       proofOfAddress
     });
   };
@@ -580,28 +584,25 @@ export default function WalletDetailPage({ params: paramsPromise }: { params: Pr
                   className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2.5 text-sm text-paper-50 outline-none focus:border-blue-500/50"
                 >
                   <option value="TIER_1">Tier 1 (Base limit)</option>
-                  <option value="TIER_2">Tier 2 (NIN / BVN verification)</option>
-                  <option value="TIER_3">Tier 3 (BVN + Address verification)</option>
+                  <option value="TIER_2">Tier 2 (BVN & NIN verification)</option>
+                  <option value="TIER_3">Tier 3 (BVN, NIN & Address verification)</option>
                 </select>
               </div>
 
               {selectedTier !== "TIER_1" && (
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-paper-200/70">Bank Verification Number (BVN)</label>
-                  <input
-                    type="text"
-                    maxLength={11}
-                    required
-                    placeholder="11 digits BVN"
-                    value={bvn}
-                    onChange={(e) => setBvn(e.target.value)}
-                    className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2.5 text-sm text-paper-50 outline-none focus:border-blue-500/50"
-                  />
-                </div>
-              )}
-
-              {selectedTier === "TIER_3" && (
-                <>
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-paper-200/70">Bank Verification Number (BVN)</label>
+                    <input
+                      type="text"
+                      maxLength={11}
+                      required
+                      placeholder="11 digits BVN"
+                      value={bvn}
+                      onChange={(e) => setBvn(e.target.value)}
+                      className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2.5 text-sm text-paper-50 outline-none focus:border-blue-500/50"
+                    />
+                  </div>
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-paper-200/70">National Identity Number (NIN)</label>
                     <input
@@ -614,19 +615,22 @@ export default function WalletDetailPage({ params: paramsPromise }: { params: Pr
                       className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2.5 text-sm text-paper-50 outline-none focus:border-blue-500/50"
                     />
                   </div>
-                  <div className="flex items-center gap-2 py-2">
-                    <input
-                      type="checkbox"
-                      id="proofOfAddress"
-                      checked={proofOfAddress}
-                      onChange={(e) => setProofOfAddress(e.target.checked)}
-                      className="rounded border-white/10 bg-ink-900 accent-blue-500"
-                    />
-                    <label htmlFor="proofOfAddress" className="text-xs text-paper-200/70 select-none cursor-pointer">
-                      Verified Utility Bill / Proof of Address Document
-                    </label>
-                  </div>
-                </>
+                </div>
+              )}
+
+              {selectedTier === "TIER_3" && (
+                <div className="flex items-center gap-2 py-2">
+                  <input
+                    type="checkbox"
+                    id="proofOfAddress"
+                    checked={proofOfAddress}
+                    onChange={(e) => setProofOfAddress(e.target.checked)}
+                    className="rounded border-white/10 bg-ink-900 accent-blue-500"
+                  />
+                  <label htmlFor="proofOfAddress" className="text-xs text-paper-200/70 select-none cursor-pointer">
+                    Verified Utility Bill / Proof of Address Document
+                  </label>
+                </div>
               )}
 
               <div className="mt-6 flex justify-end gap-2 text-xs">
