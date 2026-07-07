@@ -56,6 +56,7 @@ export interface TemporaryAccount {
   status: "ACTIVE" | "FUNDED" | "EXPIRED" | "CANCELLED";
   createdAt: string;
   expectedAmount?: number;
+  receivedAmount?: number;
 }
 
 export interface WebhookEvent {
