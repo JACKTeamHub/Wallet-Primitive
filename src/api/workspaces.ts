@@ -35,6 +35,10 @@ export const workspacesApi = {
     client.post("/workspaces/webhooks/simulate", payload).then((r) => r.data),
 
   quarantine: {
-    list: () => client.get("/workspaces/quarantine").then((r) => r.data),
+    list: () => client.get<any[]>("/workspaces/quarantine").then((r) => r.data),
+    release: (id: string) =>
+      client.post(`/workspaces/quarantine/${id}/release`).then((r) => r.data),
+    reject: (id: string) =>
+      client.post(`/workspaces/quarantine/${id}/reject`).then((r) => r.data),
   },
 };

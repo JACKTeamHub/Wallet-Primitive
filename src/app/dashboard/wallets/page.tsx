@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { walletsApi } from "@/api/wallets";
 import { TableSkeleton, EmptyState, ErrorState } from "@/components/ui/AsyncStates";
 import { cn } from "@/utils/cn";
@@ -17,6 +18,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function WalletsPage() {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const { data, isPending, isError, error } = useQuery({
     queryKey: ["wallets", page],
@@ -33,10 +35,10 @@ export default function WalletsPage() {
           <EmptyState title="No wallets yet" description="Wallets provisioned for customers will appear here." />
         )}
         {!isPending && !isError && data && data.data.length > 0 && (
-          <div className="overflow-hidden rounded-xl border border-white/10">
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-ink-800">
             <table className="w-full text-left text-sm">
-              <thead className="bg-ink-800 text-xs text-paper-200/50">
-                <tr>
+              <thead className="bg-ink-950 text-xs text-paper-200/50">
+                <tr className="border-b border-white/5">
                   <th className="px-4 py-3 font-medium">Account</th>
                   <th className="px-4 py-3 font-medium">Bank</th>
                   <th className="px-4 py-3 font-medium">Balance</th>
@@ -46,7 +48,17 @@ export default function WalletsPage() {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {data.data.map((w) => (
-                  <tr key={w.id} className="hover:bg-white/5">
+                  <tr
+                    key={w.id}
+                    onClick={() => router.push(`/dashboard/wallets/${w.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        router.push(`/dashboard/wallets/${w.id}`);
+                      }
+                    }}
+                    tabIndex={0}
+                    className="hover:bg-white/5 cursor-pointer outline-none focus:bg-white/10 transition"
+                  >
                     <td className="px-4 py-3 font-mono text-paper-100">{w.accountNumber}</td>
                     <td className="px-4 py-3 text-paper-200/60">{w.bank}</td>
                     <td className="ledger-num px-4 py-3 text-paper-100">{formatKobo(w.balanceKobo)}</td>
