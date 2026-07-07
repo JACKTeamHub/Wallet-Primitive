@@ -1,7 +1,7 @@
 // All monetary amounts are integers in kobo, per the locked architecture decision.
 
 export type KYCTier = "TIER_1" | "TIER_2" | "TIER_3";
-export type WalletStatus = "ACTIVE" | "FROZEN" | "CLOSED";
+export type WalletStatus = "ACTIVE" | "FROZEN" | "CLOSED" | "SUSPENDED";
 export type ReconciliationStatus = "MATCHED" | "MISMATCHED" | "PENDING";
 
 export interface Workspace {
@@ -55,15 +55,18 @@ export interface TemporaryAccount {
   expiresAt: string;
   status: "PENDING" | "FUNDED" | "EXPIRED";
   createdAt: string;
+  expectedAmount?: number;
 }
 
 export interface WebhookEvent {
   id: string;
-  type: "virtual_account.funded" | string;
-  requestId: string;
-  payload: Record<string, unknown>;
-  deliveredAt: string | null;
-  createdAt: string;
+  type?: "virtual_account.funded" | string;
+  requestId?: string;
+  payload?: Record<string, unknown>;
+  deliveredAt?: string | null;
+  createdAt?: string;
+  eventRef?: string;
+  processedAt?: string;
 }
 
 export interface ReconciliationRecord {

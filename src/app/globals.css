@@ -18,6 +18,92 @@ html.light body {
   @apply bg-paper-50 text-ink-900;
 }
 
+html.light .bg-ink-950 {
+  @apply bg-paper-50;
+}
+
+html.light .bg-ink-900 {
+  @apply bg-white;
+}
+
+html.light .bg-ink-800 {
+  @apply bg-paper-50;
+}
+
+html.light .bg-ink-700 {
+  @apply bg-paper-100;
+}
+
+html.light .bg-ink-600 {
+  @apply bg-paper-100;
+}
+
+html.light .bg-white\/5 {
+  @apply bg-black/[0.03];
+}
+
+html.light .bg-white\/10 {
+  @apply bg-black/[0.05];
+}
+
+html.light .bg-white\/2 {
+  @apply bg-black/[0.015];
+}
+
+html.light .border-white\/5 {
+  @apply border-black/10;
+}
+
+html.light .border-white\/10 {
+  @apply border-black/15;
+}
+
+html.light .text-paper-50 {
+  @apply text-ink-900;
+}
+
+html.light .text-paper-100 {
+  @apply text-ink-900;
+}
+
+html.light .text-paper-200 {
+  @apply text-ink-700;
+}
+
+html.light .text-paper-200\/60,
+html.light .text-paper-200\/50,
+html.light .text-paper-200\/40,
+html.light .text-paper-200\/35,
+html.light .text-paper-200\/30,
+html.light .text-paper-200\/20 {
+  color: rgb(55 65 81 / 0.7);
+}
+
+html.light .bg-ink-950\/80 {
+  @apply bg-white/85;
+}
+
+html.light .bg-ink-900\/60,
+html.light .bg-ink-800\/60 {
+  @apply bg-white/90;
+}
+
+html.light .hover\:bg-white\/5:hover {
+  @apply bg-black/[0.03];
+}
+
+html.light .hover\:bg-white\/10:hover {
+  @apply bg-black/[0.05];
+}
+
+html.light .hover\:text-paper-50:hover {
+  @apply text-ink-900;
+}
+
+html.light .hover\:text-paper-100:hover {
+  @apply text-ink-900;
+}
+
 ::selection {
   background: rgba(245, 166, 35, 0.28);
 }
