@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const autoSubmittedRef = useRef(false);
 
   const login = useLogin();
   const verify = useVerifyLogin();
@@ -28,7 +29,8 @@ export default function LoginPage() {
     const passwordParam = params.get("password");
     const autoSubmitParam = params.get("autoSubmit");
 
-    if (emailParam && passwordParam && autoSubmitParam === "true") {
+    if (emailParam && passwordParam && autoSubmitParam === "true" && !autoSubmittedRef.current) {
+      autoSubmittedRef.current = true;
       emailForm.setValue("email", emailParam);
       emailForm.setValue("password", passwordParam);
       

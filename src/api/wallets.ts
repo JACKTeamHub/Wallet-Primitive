@@ -8,8 +8,8 @@ import type {
 } from "@/types/domain";
 
 export interface StatementParams {
-  from?: string; // defaults server-side to last 30 days if omitted
-  to?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 type RawRecord = Record<string, any>;
@@ -56,72 +56,43 @@ function normalizeLedgerEntry(raw: RawRecord): LedgerEntry {
   } as LedgerEntry;
 }
 
-function normalizePaginated<T>(
-  raw: T[] | (Partial<Paginated<T>> & { limit?: number }) | undefined,
-  mapItem: (item: RawRecord) => T,
-  page = 1,
-  pageSize = 20
-): Paginated<T> {
-  const list = Array.isArray(raw) ? raw : raw?.data ?? [];
-  const data = list.map((item) => mapItem(item as RawRecord));
-  return {
-    data,
-    page: Array.isArray(raw) ? page : raw?.page ?? page,
-    pageSize: Array.isArray(raw) ? pageSize : raw?.pageSize ?? raw?.limit ?? pageSize,
-    total: Array.isArray(raw) ? data.length : raw?.total ?? data.length,
-  };
-}
-
 export const walletsApi = {
-  create: (payload: { customerId: string; bvn?: string }) =>
+  create: (payload: { customerId: string }) =>
     client.post<RawRecord>("/wallets", payload).then((r) => normalizeWallet(r.data)),
 
   list: (params?: { page?: number; pageSize?: number; status?: WalletStatus }) =>
     client
-      .get<Paginated<RawRecord> | RawRecord[]>("/wallets", {
-        params: {
-          page: params?.page,
-          limit: params?.pageSize,
-          status: params?.status,
-        },
-      })
-      .then((r) =>
-        normalizePaginated(r.data, normalizeWallet, params?.page, params?.pageSize)
-      ),
+      .get<Paginated<RawRecord>>("/wallets", { params })
+      .then((r) => ({
+        ...r.data,
+        data: r.data.data.map(normalizeWallet),
+      })),
 
   getById: (id: string) =>
     client.get<RawRecord>(`/wallets/${id}`).then((r) => normalizeWallet(r.data)),
 
   getBalance: (id: string) =>
-    client.get<RawRecord>(`/wallets/${id}/balance`).then((r) => ({
-      balanceKobo:
-        typeof r.data.balanceKobo === "number"
-          ? r.data.balanceKobo
-          : toKobo(r.data.balance ?? r.data.availableBalance ?? r.data.currentBalance ?? 0),
-    })),
+    client.get<{ balanceKobo: number }>(`/wallets/${id}/balance`).then((r) => r.data),
 
   getLedger: (id: string, params?: { page?: number; pageSize?: number }) =>
     client
-      .get<Paginated<RawRecord> | RawRecord[]>(`/wallets/${id}/ledger`, {
-        params: { page: params?.page, limit: params?.pageSize },
-      })
-      .then((r) =>
-        normalizePaginated(r.data, normalizeLedgerEntry, params?.page, params?.pageSize)
-      ),
+      .get<Paginated<RawRecord>>(`/wallets/${id}/ledger`, { params })
+      .then((r) => ({
+        ...r.data,
+        data: r.data.data.map(normalizeLedgerEntry),
+      })),
 
   getStatement: (id: string, params?: StatementParams) =>
     client
-      .get<Paginated<RawRecord> | RawRecord[]>(`/wallets/${id}/statement`, {
-        params: { startDate: params?.from, endDate: params?.to },
-      })
-      .then((r) => normalizePaginated(r.data, normalizeLedgerEntry)),
+      .get<Paginated<RawRecord>>(`/wallets/${id}/statement`, { params })
+      .then((r) => ({
+        ...r.data,
+        data: r.data.data.map(normalizeLedgerEntry),
+      })),
 
   getStatementPdf: (id: string, params?: StatementParams) =>
     client
-      .get(`/wallets/${id}/statement/pdf`, {
-        params: { startDate: params?.from, endDate: params?.to },
-        responseType: "blob",
-      })
+      .get(`/wallets/${id}/statement/pdf`, { params, responseType: "blob" })
       .then((r) => r.data as Blob),
 
   updateStatus: (id: string, status: WalletStatus) =>
@@ -137,17 +108,9 @@ export const walletsApi = {
       .then((r) => normalizeWallet(r.data)),
 
   transfer: (payload: {
-    fromWalletId: string;
-    toWalletId: string;
-    amountKobo: number;
-    merchantTxRef: string;
-  }) =>
-    client
-      .post("/wallets/transfer", {
-        senderWalletId: payload.fromWalletId,
-        recipientWalletId: payload.toWalletId,
-        amount: payload.amountKobo / 100,
-        description: payload.merchantTxRef,
-      })
-      .then((r) => r.data),
+    senderAccountNumber: string;
+    recipientAccountNumber: string;
+    amount: number;
+    description?: string;
+  }) => client.post("/wallets/transfer", payload).then((r) => r.data),
 };

@@ -82,12 +82,12 @@ export default function WalletDetailPage({ params: paramsPromise }: { params: Pr
 
   // Mutations
   const transferMutation = useMutation({
-    mutationFn: (payload: { toWalletId: string; amountKobo: number; merchantTxRef: string }) =>
+    mutationFn: (payload: { recipientAccountNumber: string; amount: number; description?: string }) =>
       walletsApi.transfer({
-        fromWalletId: id,
-        toWalletId: payload.toWalletId,
-        amountKobo: payload.amountKobo,
-        merchantTxRef: payload.merchantTxRef,
+        senderAccountNumber: wallet?.accountNumber || "",
+        recipientAccountNumber: payload.recipientAccountNumber,
+        amount: payload.amount,
+        description: payload.description,
       }),
     onSuccess: () => {
       toast("Transfer completed successfully", "success");
@@ -130,7 +130,7 @@ export default function WalletDetailPage({ params: paramsPromise }: { params: Pr
   });
 
   const downloadPdfMutation = useMutation({
-    mutationFn: () => walletsApi.getStatementPdf(id, { from: startDate, to: endDate }),
+    mutationFn: () => walletsApi.getStatementPdf(id, { startDate: startDate || undefined, endDate: endDate || undefined }),
     onSuccess: (blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -152,16 +152,16 @@ export default function WalletDetailPage({ params: paramsPromise }: { params: Pr
     e.preventDefault();
     if (!recipientAccount || !transferAmount) return;
 
-    const amountKobo = Math.round(parseFloat(transferAmount) * 100);
-    if (isNaN(amountKobo) || amountKobo <= 0) {
+    const amount = parseFloat(transferAmount);
+    if (isNaN(amount) || amount <= 0) {
       toast("Please enter a valid amount", "error");
       return;
     }
 
     transferMutation.mutate({
-      toWalletId: recipientAccount,
-      amountKobo,
-      merchantTxRef: transferDesc || `tx_desk_${Date.now()}`
+      recipientAccountNumber: recipientAccount,
+      amount,
+      description: transferDesc || undefined,
     });
   };
 
@@ -511,14 +511,14 @@ export default function WalletDetailPage({ params: paramsPromise }: { params: Pr
             <h3 className="font-display text-lg font-semibold text-paper-50">Transfer Ledger Funds</h3>
             <form onSubmit={handleTransfer} className="mt-4 space-y-4">
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-paper-200/70">Recipient Wallet ID</label>
+                <label className="mb-1.5 block text-xs font-medium text-paper-200/70">Recipient Account Number</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. 341c8f1a-b620-4e1b-8533-875fba18cf23"
+                  placeholder="e.g. 1950215058"
                   value={recipientAccount}
                   onChange={(e) => setRecipientAccount(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2.5 text-sm text-paper-50 outline-none focus:border-blue-500/50"
+                  className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2.5 text-sm text-paper-50 outline-none focus:border-blue-500/50 font-mono"
                 />
               </div>
               <div>

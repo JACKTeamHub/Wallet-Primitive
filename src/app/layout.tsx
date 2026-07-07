@@ -23,6 +23,13 @@ export const metadata: Metadata = {
     "Wallet Primitive turns Nomba's banking rails into clean, typed APIs: virtual accounts, ledgers, webhooks, and reconciliation, provisioned in minutes.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
