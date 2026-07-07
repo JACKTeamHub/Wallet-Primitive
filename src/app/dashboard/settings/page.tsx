@@ -330,7 +330,7 @@ function WebhookSimulatorCard() {
   });
 
   const activeWallets = wallets?.data.filter((w) => w.status === "ACTIVE") || [];
-  const activeTempAccounts = tempAccounts?.data.filter((a) => a.status === "PENDING" && new Date() <= new Date(a.expiresAt)) || [];
+  const activeTempAccounts = tempAccounts?.data.filter((a) => a.status === "ACTIVE" && new Date() <= new Date(a.expiresAt)) || [];
 
   // Auto-select first active account if none selected
   useEffect(() => {

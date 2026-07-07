@@ -53,7 +53,7 @@ export interface TemporaryAccount {
   accountNumber: string;
   bank: string;
   expiresAt: string;
-  status: "PENDING" | "FUNDED" | "EXPIRED";
+  status: "ACTIVE" | "FUNDED" | "EXPIRED" | "CANCELLED";
   createdAt: string;
   expectedAmount?: number;
 }
