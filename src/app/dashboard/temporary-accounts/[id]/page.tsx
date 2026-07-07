@@ -8,6 +8,15 @@ import { temporaryAccountsApi } from "@/api/temporaryAccounts";
 import { TableSkeleton, ErrorState } from "@/components/ui/AsyncStates";
 import { cn } from "@/utils/cn";
 
+function formatKobo(kobo: number) {
+  const val = typeof kobo === "number" && !isNaN(kobo) ? kobo : 0;
+  const num = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(val / 100);
+  return `₦${num}`;
+}
+
 const STATUS_STYLES: Record<string, string> = {
   PENDING: "text-amber-500 bg-amber-500/10 border-amber-500/20",
   FUNDED: "text-signal-green bg-signal-green/10 border-signal-green/20",
@@ -23,6 +32,13 @@ export default function TemporaryAccountDetailPage({ params: paramsPromise }: { 
   const { data: account, isPending, isError, error } = useQuery({
     queryKey: ["temporary-account", id],
     queryFn: () => temporaryAccountsApi.getById(id),
+    refetchInterval: (query) => {
+      const data = query.state.data as any;
+      if (data && (data.status === "FUNDED" || data.status === "EXPIRED")) {
+        return false;
+      }
+      return 3000; // Poll every 3 seconds while pending payment
+    },
   });
 
   const isExpired = account ? new Date() > new Date(account.expiresAt) : false;
@@ -100,6 +116,16 @@ export default function TemporaryAccountDetailPage({ params: paramsPromise }: { 
           <div className="flex items-center justify-between border-b border-white/5 pb-3">
             <span className="text-xs text-paper-200/40">NUBAN Account</span>
             <span className="font-mono text-sm font-semibold text-paper-50">{account.accountNumber}</span>
+          </div>
+
+          <div className="flex items-center justify-between border-b border-white/5 pb-3">
+            <span className="text-xs text-paper-200/40">Expected Amount</span>
+            <span className="font-mono text-sm font-semibold text-paper-50">{formatKobo((account.expectedAmount || 0) * 100)}</span>
+          </div>
+
+          <div className="flex items-center justify-between border-b border-white/5 pb-3">
+            <span className="text-xs text-paper-200/40">Received Amount</span>
+            <span className="font-mono text-sm font-semibold text-signal-green">{formatKobo((account.receivedAmount || 0) * 100)}</span>
           </div>
 
           <div className="flex items-center justify-between border-b border-white/5 pb-3">
