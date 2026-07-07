@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, User, Mail, Calendar, Edit2, Wallet, Plus, RefreshCw } from "lucide-react";
 import { customersApi } from "@/api/customers";
 import { walletsApi } from "@/api/wallets";
@@ -11,12 +12,18 @@ import { useToast } from "@/providers/toast-provider";
 import { cn } from "@/utils/cn";
 
 function formatKobo(kobo: number) {
-  return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(kobo / 100);
+  const val = typeof kobo === "number" && !isNaN(kobo) ? kobo : 0;
+  const num = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(val / 100);
+  return `₦${num}`;
 }
 
 export default function CustomerDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise);
   const id = params.id;
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -165,58 +172,101 @@ export default function CustomerDetailPage({ params: paramsPromise }: { params: 
             description="This customer does not have any dedicated virtual wallets configured yet."
           />
         ) : (
-          <div className="overflow-hidden rounded-xl border border-white/10 bg-ink-900">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-ink-950 text-paper-200/50">
-                <tr className="border-b border-white/5">
-                  <th className="px-4 py-3 font-medium">NUBAN Account</th>
-                  <th className="px-4 py-3 font-medium">Bank</th>
-                  <th className="px-4 py-3 font-medium">Balance</th>
-                  <th className="px-4 py-3 font-medium">KYC Tier</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {customerWallets.map((w) => (
-                  <tr key={w.id} className="hover:bg-white/2 cursor-pointer">
-                    <td className="px-4 py-3 font-mono text-paper-100">
-                      <Link href={`/dashboard/wallets/${w.id}`} className="block">
-                        {w.accountNumber}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-paper-200/60">
-                      <Link href={`/dashboard/wallets/${w.id}`} className="block">
-                        {w.bank}
-                      </Link>
-                    </td>
-                    <td className="ledger-num px-4 py-3 text-paper-100">
-                      <Link href={`/dashboard/wallets/${w.id}`} className="block">
-                        {formatKobo(w.balanceKobo)}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-paper-200/60">
-                      <Link href={`/dashboard/wallets/${w.id}`} className="block">
-                        {w.kyc.tier.replace("TIER_", "Tier ")}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link href={`/dashboard/wallets/${w.id}`} className="block">
-                        <span
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-2xs font-semibold tracking-wide uppercase",
-                            w.status === "ACTIVE" && "text-signal-green bg-signal-green/10",
-                            w.status === "FROZEN" && "text-amber-500 bg-amber-500/10",
-                            w.status === "CLOSED" && "text-signal-red bg-signal-red/10"
-                          )}
-                        >
-                          {w.status}
-                        </span>
-                      </Link>
-                    </td>
+          <div className="space-y-4">
+            {/* Desktop Table view (md and up) */}
+            <div className="hidden md:block overflow-hidden rounded-xl border border-white/10 bg-ink-900">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-ink-950 text-paper-200/50">
+                  <tr className="border-b border-white/5">
+                    <th className="px-4 py-3 font-medium">NUBAN Account</th>
+                    <th className="px-4 py-3 font-medium">Bank</th>
+                    <th className="px-4 py-3 font-medium">Balance</th>
+                    <th className="px-4 py-3 font-medium">KYC Tier</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {customerWallets.map((w) => (
+                    <tr key={w.id} className="hover:bg-white/2 cursor-pointer">
+                      <td className="px-4 py-3 font-mono text-paper-100 font-semibold">
+                        <Link href={`/dashboard/wallets/${w.id}`} className="block">
+                          {w.accountNumber}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-paper-200/60">
+                        <Link href={`/dashboard/wallets/${w.id}`} className="block">
+                          {w.bank}
+                        </Link>
+                      </td>
+                      <td className="ledger-num px-4 py-3 text-paper-100 font-semibold">
+                        <Link href={`/dashboard/wallets/${w.id}`} className="block">
+                          {formatKobo(w.balanceKobo)}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-paper-200/60">
+                        <Link href={`/dashboard/wallets/${w.id}`} className="block">
+                          {w.kyc?.tier ? w.kyc.tier.replace("TIER_", "Tier ") : "Tier 1"}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link href={`/dashboard/wallets/${w.id}`} className="block">
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider",
+                              w.status === "ACTIVE" && "text-signal-green bg-signal-green/10",
+                              w.status === "FROZEN" && "text-amber-500 bg-amber-500/10",
+                              w.status === "CLOSED" && "text-signal-red bg-signal-red/10"
+                            )}
+                          >
+                            {w.status.charAt(0) + w.status.slice(1).toLowerCase()}
+                          </span>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Stacked Card view (under md) */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
+              {customerWallets.map((w) => (
+                <div
+                  key={w.id}
+                  onClick={() => router.push(`/dashboard/wallets/${w.id}`)}
+                  className="rounded-xl border border-white/5 bg-ink-900 p-4 hover:border-white/10 active:bg-ink-900/80 transition cursor-pointer flex flex-col gap-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-mono text-sm font-semibold text-paper-100">{w.accountNumber}</span>
+                      <p className="text-3xs text-paper-200/40 mt-0.5">{w.bank}</p>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-3xs font-semibold tracking-wider",
+                        w.status === "ACTIVE" && "text-signal-green bg-signal-green/10",
+                        w.status === "FROZEN" && "text-amber-500 bg-amber-500/10",
+                        w.status === "CLOSED" && "text-signal-red bg-signal-red/10"
+                      )}
+                    >
+                      {w.status.charAt(0) + w.status.slice(1).toLowerCase()}
+                    </span>
+                  </div>
+                  <div className="flex items-end justify-between border-t border-white/5 pt-3">
+                    <div>
+                      <p className="text-4xs uppercase tracking-wider text-paper-200/30 font-semibold">Balance</p>
+                      <p className="text-sm font-semibold text-paper-50 font-mono mt-0.5">{formatKobo(w.balanceKobo)}</p>
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-1">
+                      <span className="text-3xs text-paper-200/50 block">
+                        {w.kyc?.tier ? w.kyc.tier.replace("TIER_", "Tier ") : "Tier 1"}
+                      </span>
+                      <span className="text-4xs text-blue-400 font-semibold">Tap to manage</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

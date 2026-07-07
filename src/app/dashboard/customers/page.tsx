@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Search, Plus, User, RefreshCw } from "lucide-react";
+import { Search, Plus, User, RefreshCw, ChevronRight } from "lucide-react";
 import { customersApi } from "@/api/customers";
 import { TableSkeleton, EmptyState, ErrorState } from "@/components/ui/AsyncStates";
 import { useToast } from "@/providers/toast-provider";
@@ -76,37 +76,70 @@ export default function CustomersPage() {
           <EmptyState title="No customers yet" description="Customers created via the API will show up here." />
         )}
         {!isPending && !isError && data && data.data.length > 0 && (
-          <div className="overflow-hidden rounded-xl border border-white/10 bg-ink-800">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-ink-950 text-xs text-paper-200/50">
-                <tr className="border-b border-white/5">
-                  <th className="px-4 py-3 font-medium">Name</th>
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Created</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {data.data.map((c) => (
-                  <tr
-                    key={c.id}
-                    onClick={() => router.push(`/dashboard/customers/${c.id}`)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        router.push(`/dashboard/customers/${c.id}`);
-                      }
-                    }}
-                    tabIndex={0}
-                    className="hover:bg-white/5 cursor-pointer outline-none focus:bg-white/10 transition"
-                  >
-                    <td className="px-4 py-3 text-paper-100 font-semibold">{c.name}</td>
-                    <td className="px-4 py-3 text-paper-200/60">{c.email}</td>
-                    <td className="px-4 py-3 text-paper-200/60">
-                      {new Date(c.createdAt).toLocaleDateString()}
-                    </td>
+          <div className="space-y-4">
+            {/* Desktop Table view (md and up) */}
+            <div className="hidden md:block overflow-hidden rounded-xl border border-white/10 bg-ink-800">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-ink-950 text-xs text-paper-200/50">
+                  <tr className="border-b border-white/5">
+                    <th className="px-4 py-3 font-medium">Name</th>
+                    <th className="px-4 py-3 font-medium">Email</th>
+                    <th className="px-4 py-3 font-medium">Created</th>
+                    <th className="px-4 py-3 text-right"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {data.data.map((c) => (
+                    <tr
+                      key={c.id}
+                      onClick={() => router.push(`/dashboard/customers/${c.id}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          router.push(`/dashboard/customers/${c.id}`);
+                        }
+                      }}
+                      tabIndex={0}
+                      className="hover:bg-white/5 cursor-pointer outline-none focus:bg-white/10 transition group"
+                    >
+                      <td className="px-4 py-3 text-paper-100 font-semibold">{c.name}</td>
+                      <td className="px-4 py-3 text-paper-200/60">{c.email}</td>
+                      <td className="px-4 py-3 text-paper-200/60">
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5 text-xs text-paper-200/20 group-hover:text-blue-400 transition">
+                          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">View details & wallets</span>
+                          <ChevronRight className="h-4 w-4 text-paper-200/30 group-hover:text-blue-400 transition-colors" />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Stacked Card view (under md) */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
+              {data.data.map((c) => (
+                <div
+                  key={c.id}
+                  onClick={() => router.push(`/dashboard/customers/${c.id}`)}
+                  className="rounded-xl border border-white/5 bg-ink-800 p-4 hover:border-white/10 active:bg-ink-800/80 transition cursor-pointer flex flex-col justify-between gap-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-paper-100 text-sm">{c.name}</h4>
+                      <p className="text-3xs text-paper-200/40 mt-0.5">{c.email}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-paper-200/30 text-blue-400" />
+                  </div>
+                  <div className="flex items-center justify-between border-t border-white/5 pt-3 text-3xs text-paper-200/50">
+                    <span>Account Profile</span>
+                    <span>Registered: {new Date(c.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

@@ -15,6 +15,15 @@ export default function WebhooksPage() {
 
   const selected = data?.data.find((w) => w.id === selectedId) ?? null;
 
+  const handleSelect = (id: string) => {
+    setSelectedId(id);
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setTimeout(() => {
+        document.getElementById("payload-viewer")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  };
+
   return (
     <div>
       <h1 className="font-display text-2xl font-semibold text-paper-50">Webhooks</h1>
@@ -30,31 +39,52 @@ export default function WebhooksPage() {
               {data.data.map((w) => (
                 <button
                   key={w.id}
-                  onClick={() => setSelectedId(w.id)}
+                  onClick={() => handleSelect(w.id)}
                   className={cn(
                     "flex w-full items-center justify-between px-4 py-3 text-left text-sm transition hover:bg-white/5",
                     selectedId === w.id && "bg-white/5"
                   )}
                 >
-                  <span className="font-mono text-paper-100">{w.type}</span>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-mono text-paper-100 font-semibold">{"payment_success"}</span>
+                    <span className="text-3xs text-paper-200/30 font-mono">Ref: {w.eventRef}</span>
+                  </div>
                   <span
                     className={cn(
-                      "rounded-full px-2 py-0.5 text-xs",
-                      w.deliveredAt ? "bg-signal-green/10 text-signal-green" : "bg-blue-500/10 text-blue-400"
+                      "rounded-full px-2 py-0.5 text-3xs font-semibold tracking-wider",
+                      w.processedAt ? "bg-signal-green/10 text-signal-green" : "bg-blue-500/10 text-blue-400"
                     )}
                   >
-                    {w.deliveredAt ? "Delivered" : "Pending"}
+                    {w.processedAt ? "Processed" : "Pending"}
                   </span>
                 </button>
               ))}
             </div>
           )}
         </div>
-        <div className="lg:col-span-2">
+        <div id="payload-viewer" className="lg:col-span-2">
           {selected ? (
-            <pre className="max-h-96 overflow-auto rounded-xl border border-white/10 bg-ink-950 p-4 font-mono text-xs text-paper-100">
-              {JSON.stringify(selected.payload, null, 2)}
-            </pre>
+            <div className="space-y-2">
+              <span className="text-3xs font-semibold text-paper-200/40 uppercase tracking-wider block">Raw Webhook JSON</span>
+              <pre className="max-h-96 overflow-auto rounded-xl border border-white/10 bg-ink-950 p-4 font-mono text-2xs text-paper-100 shadow-inner">
+                {JSON.stringify({
+                  event_type: "payment_success",
+                  requestId: `req_${selected.id.slice(0, 8)}`,
+                  data: {
+                    merchant: {
+                      userId: "mock_user_id",
+                      walletId: "mock_wallet_id"
+                    },
+                    transaction: {
+                      transactionId: selected.eventRef,
+                      type: "CREDIT",
+                      responseCode: "00",
+                      time: selected.processedAt
+                    }
+                  }
+                }, null, 2)}
+              </pre>
+            </div>
           ) : (
             <div className="rounded-xl border border-dashed border-white/10 p-6 text-center text-sm text-paper-200/40">
               Select an event to inspect its payload
