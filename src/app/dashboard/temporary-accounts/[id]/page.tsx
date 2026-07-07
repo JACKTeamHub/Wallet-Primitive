@@ -25,9 +25,14 @@ export default function TemporaryAccountDetailPage({ params: paramsPromise }: { 
     queryFn: () => temporaryAccountsApi.getById(id),
   });
 
+  const isExpired = account ? new Date() > new Date(account.expiresAt) : false;
+  const mappedStatus = account
+    ? (isExpired ? "EXPIRED" : ((account.status as string) === "ACTIVE" ? "PENDING" : account.status))
+    : "";
+
   // Countdown timer logic
   useEffect(() => {
-    if (!account || account.status !== "PENDING") {
+    if (!account || mappedStatus !== "PENDING") {
       setTimeLeft("");
       return;
     }
@@ -46,7 +51,7 @@ export default function TemporaryAccountDetailPage({ params: paramsPromise }: { 
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [account]);
+  }, [account, mappedStatus]);
 
   if (isPending) {
     return (
@@ -73,11 +78,11 @@ export default function TemporaryAccountDetailPage({ params: paramsPromise }: { 
         </Link>
         <span
           className={cn(
-            "rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wider uppercase",
-            STATUS_STYLES[account.status]
+            "rounded-full border px-2.5 py-0.5 text-3xs font-semibold tracking-wider",
+            STATUS_STYLES[mappedStatus]
           )}
         >
-          {account.status}
+          {mappedStatus.charAt(0) + mappedStatus.slice(1).toLowerCase()}
         </span>
       </div>
 
@@ -110,7 +115,7 @@ export default function TemporaryAccountDetailPage({ params: paramsPromise }: { 
             </div>
           </div>
 
-          {account.status === "PENDING" && timeLeft && (
+          {mappedStatus === "PENDING" && timeLeft && (
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
               <span className="text-xs text-paper-200/40">Status Countdown</span>
               <div className="flex items-center gap-1 text-xs text-amber-500 font-medium">
@@ -128,7 +133,7 @@ export default function TemporaryAccountDetailPage({ params: paramsPromise }: { 
 
         {/* State Notice Cards */}
         <div className="mt-8">
-          {account.status === "FUNDED" && (
+          {mappedStatus === "FUNDED" && (
             <div className="flex items-start gap-3 rounded-lg border border-signal-green/20 bg-signal-green/5 p-4 text-xs text-signal-green">
               <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
               <div>
@@ -137,7 +142,7 @@ export default function TemporaryAccountDetailPage({ params: paramsPromise }: { 
               </div>
             </div>
           )}
-          {account.status === "PENDING" && (
+          {mappedStatus === "PENDING" && (
             <div className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-xs text-amber-500">
               <Clock className="h-4 w-4 shrink-0 mt-0.5" />
               <div>
@@ -146,7 +151,7 @@ export default function TemporaryAccountDetailPage({ params: paramsPromise }: { 
               </div>
             </div>
           )}
-          {account.status === "EXPIRED" && (
+          {mappedStatus === "EXPIRED" && (
             <div className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/2 p-4 text-xs text-paper-200/60">
               <AlertOctagon className="h-4 w-4 shrink-0 mt-0.5" />
               <div>
