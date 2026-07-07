@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { workspacesApi } from "@/api/workspaces";
 import { TextField } from "@/components/ui/TextField";
 import { Copy, Check, Trash2 } from "lucide-react";
+import { useToast } from "@/providers/toast-provider";
 
 function CredentialsCard() {
   const [clientId, setClientId] = useState("");
@@ -44,20 +45,36 @@ function CredentialsCard() {
 
 function ApiKeysCard() {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const [label, setLabel] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [revokeId, setRevokeId] = useState<string | null>(null);
+
   const { data } = useQuery({ queryKey: ["api-keys"], queryFn: workspacesApi.apiKeys.list });
+  
   const create = useMutation({
     mutationFn: () => workspacesApi.apiKeys.create(label),
     onSuccess: (res) => {
       setCopiedKey(res.key);
       setLabel("");
+      toast("API key generated successfully", "success");
       qc.invalidateQueries({ queryKey: ["api-keys"] });
     },
+    onError: (err: any) => {
+      toast(err.message || "Failed to create API key", "error");
+    }
   });
+
   const revoke = useMutation({
     mutationFn: workspacesApi.apiKeys.revoke,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["api-keys"] }),
+    onSuccess: () => {
+      toast("API key revoked", "success");
+      setRevokeId(null);
+      qc.invalidateQueries({ queryKey: ["api-keys"] });
+    },
+    onError: (err: any) => {
+      toast(err.message || "Failed to revoke API key", "error");
+    }
   });
 
   return (
@@ -68,26 +85,27 @@ function ApiKeysCard() {
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           placeholder="Key label, e.g. production"
-          className="flex-1 rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-paper-50 outline-none placeholder:text-paper-200/25 focus:border-amber-500/50"
+          className="flex-1 rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-sm text-paper-50 outline-none placeholder:text-paper-200/25 focus:border-blue-500/50"
         />
         <button
           onClick={() => create.mutate()}
           disabled={!label || create.isPending}
-          className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-ink-950 hover:bg-amber-400 disabled:opacity-50"
+          className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 disabled:opacity-50 transition"
         >
           Create
         </button>
       </div>
 
       {copiedKey && (
-        <div className="mt-3 flex items-center justify-between rounded-lg bg-ink-950 px-3 py-2">
+        <div className="mt-3 flex items-center justify-between rounded-lg bg-ink-950 px-3 py-2 border border-white/5 animate-tick">
           <code className="truncate font-mono text-xs text-paper-100">{copiedKey}</code>
           <button
             onClick={async () => {
               await navigator.clipboard.writeText(copiedKey);
+              toast("Copied key to clipboard", "success");
             }}
           >
-            <Copy className="h-3.5 w-3.5 text-paper-200/40" />
+            <Copy className="h-3.5 w-3.5 text-paper-200/40 hover:text-paper-100 transition" />
           </button>
         </div>
       )}
@@ -96,9 +114,28 @@ function ApiKeysCard() {
         {data?.map((k) => (
           <li key={k.id} className="flex items-center justify-between py-2 text-sm">
             <span className="text-paper-100">{k.label}</span>
-            <button onClick={() => revoke.mutate(k.id)} aria-label={`Revoke ${k.label}`}>
-              <Trash2 className="h-3.5 w-3.5 text-paper-200/40 hover:text-signal-red" />
-            </button>
+            {revokeId === k.id ? (
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-signal-red font-medium">Revoke?</span>
+                <button
+                  onClick={() => revoke.mutate(k.id)}
+                  disabled={revoke.isPending}
+                  className="rounded bg-signal-red/10 px-2 py-1 text-signal-red hover:bg-signal-red/20 transition"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => setRevokeId(null)}
+                  className="rounded bg-white/5 px-2 py-1 text-paper-200 hover:bg-white/10 transition"
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setRevokeId(k.id)} aria-label={`Revoke ${k.label}`}>
+                <Trash2 className="h-3.5 w-3.5 text-paper-200/40 hover:text-signal-red transition" />
+              </button>
+            )}
           </li>
         ))}
       </ul>
