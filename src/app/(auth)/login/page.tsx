@@ -8,9 +8,11 @@ import { AuthCard } from "@/components/layout/AuthCard";
 import { TextField } from "@/components/ui/TextField";
 import { loginSchema, type LoginInput } from "@/schemas/auth";
 import { useLogin } from "@/features/auth/useSignup";
+import { useToast } from "@/providers/toast-provider";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const autoSubmittedRef = useRef(false);
 
@@ -47,10 +49,13 @@ export default function LoginPage() {
           } else {
             router.push("/dashboard");
           }
+        },
+        onError: (err: any) => {
+          toast(err.message || "Auto-sign in failed. Please verify credentials.", "error");
         }
       });
     }
-  }, [emailForm, login, router]);
+  }, [emailForm, login, router, toast]);
 
   const onEmail = emailForm.handleSubmit(async (values) => {
     try {
@@ -69,8 +74,8 @@ export default function LoginPage() {
       } else {
         router.push("/dashboard");
       }
-    } catch {
-      // Swallowed: React Query handles errors in UI state
+    } catch (err: any) {
+      toast(err.message || "Invalid email or password", "error");
     }
   });
 
@@ -85,8 +90,22 @@ export default function LoginPage() {
   return (
     <AuthCard title="Sign in" subtitle="Enter your workspace credentials.">
       <form onSubmit={onEmail} className="space-y-4">
-        <TextField label="Work email" type="email" placeholder="you@company.com" error={emailForm.formState.errors.email?.message} {...emailForm.register("email")} />
-        <TextField label="Password" type="password" placeholder="••••••••" error={emailForm.formState.errors.password?.message} {...emailForm.register("password")} />
+        <TextField 
+          label="Work email" 
+          type="email" 
+          placeholder="you@company.com" 
+          autoCapitalize="none"
+          autoCorrect="off"
+          error={emailForm.formState.errors.email?.message} 
+          {...emailForm.register("email")} 
+        />
+        <TextField 
+          label="Password" 
+          type="password" 
+          placeholder="••••••••" 
+          error={emailForm.formState.errors.password?.message} 
+          {...emailForm.register("password")} 
+        />
         <button
           type="submit"
           disabled={login.isPending}
@@ -95,6 +114,13 @@ export default function LoginPage() {
           {login.isPending ? "Signing in…" : "Continue"}
         </button>
       </form>
+      
+      {login.isError && (
+        <p className="text-center text-xs text-signal-red mt-3">
+          {login.error.message || "Invalid email or password"}
+        </p>
+      )}
+
       <p className="mt-5 text-center text-xs text-paper-200/45">
         Need a workspace?{" "}
         <a href="/signup" className="text-blue-500 hover:underline">
