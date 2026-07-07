@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { workspacesApi } from "@/api/workspaces";
 import { walletsApi } from "@/api/wallets";
+import { temporaryAccountsApi } from "@/api/temporaryAccounts";
 import { TextField } from "@/components/ui/TextField";
 import { Copy, Check, Trash2, Key, ShieldAlert } from "lucide-react";
 import { useToast } from "@/providers/toast-provider";
@@ -323,14 +324,24 @@ function WebhookSimulatorCard() {
     queryFn: () => walletsApi.list({ page: 1, pageSize: 100 }),
   });
 
-  const activeWallets = wallets?.data.filter((w) => w.status === "ACTIVE") || [];
+  const { data: tempAccounts } = useQuery({
+    queryKey: ["temporary-accounts"],
+    queryFn: () => temporaryAccountsApi.list({ page: 1, pageSize: 100 }),
+  });
 
-  // Auto-select first active wallet if none selected
+  const activeWallets = wallets?.data.filter((w) => w.status === "ACTIVE") || [];
+  const activeTempAccounts = tempAccounts?.data.filter((a) => a.status === "PENDING" && new Date() <= new Date(a.expiresAt)) || [];
+
+  // Auto-select first active account if none selected
   useEffect(() => {
-    if (activeWallets.length > 0 && !selectedAccount) {
-      setSelectedAccount(activeWallets[0]?.accountNumber || "");
+    if (!selectedAccount) {
+      if (activeWallets.length > 0) {
+        setSelectedAccount(activeWallets[0]?.accountNumber || "");
+      } else if (activeTempAccounts.length > 0) {
+        setSelectedAccount(activeTempAccounts[0]?.accountNumber || "");
+      }
     }
-  }, [activeWallets, selectedAccount]);
+  }, [activeWallets, activeTempAccounts, selectedAccount]);
 
   const simulate = useMutation({
     mutationFn: () =>
@@ -366,24 +377,37 @@ function WebhookSimulatorCard() {
         <p className="mt-1 text-xs text-paper-200/50">Fire a simulated virtual account deposit event directly at your workspace receiver.</p>
       </div>
 
-      {activeWallets.length === 0 ? (
+      {activeWallets.length === 0 && activeTempAccounts.length === 0 ? (
         <div className="rounded-lg border border-dashed border-white/10 p-5 text-center text-xs text-paper-200/40">
-          Provision at least one Active virtual wallet to test deposits.
+          Provision at least one Active virtual wallet or checkout account to test deposits.
         </div>
       ) : (
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-2xs font-semibold text-paper-200/50">Target Wallet</label>
+            <label className="mb-1 block text-2xs font-semibold text-paper-200/50">Target Account</label>
             <select
               value={selectedAccount}
               onChange={(e) => setSelectedAccount(e.target.value)}
               className="w-full rounded-lg border border-white/10 bg-ink-900 px-3 py-2 text-xs text-paper-50 outline-none focus:border-blue-500/50"
             >
-              {activeWallets.map((w) => (
-                <option key={w.id} value={w.accountNumber}>
-                  {w.accountNumber}{w.bank ? ` (${w.bank})` : ""}
-                </option>
-              ))}
+              {activeWallets.length > 0 && (
+                <optgroup label="Persistent Wallets">
+                  {activeWallets.map((w) => (
+                    <option key={w.id} value={w.accountNumber}>
+                      {w.accountNumber}{w.bank ? ` (${w.bank})` : ""}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {activeTempAccounts.length > 0 && (
+                <optgroup label="Active Checkout Accounts">
+                  {activeTempAccounts.map((a) => (
+                    <option key={a.id} value={a.accountNumber}>
+                      {a.accountNumber} (Checkout NGN {a.expectedAmount})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </div>
 
