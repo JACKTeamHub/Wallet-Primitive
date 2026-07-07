@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,10 +8,19 @@ import { AuthCard } from "@/components/layout/AuthCard";
 import { TextField } from "@/components/ui/TextField";
 import { signupSchema, otpSchema, type SignupInput, type OtpInput } from "@/schemas/auth";
 import { useSignup, useVerifyOnboarding } from "@/features/auth/useSignup";
+import { useToast } from "@/providers/toast-provider";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const signup = useSignup();
   const verify = useVerifyOnboarding();
 
@@ -19,15 +28,36 @@ export default function SignupPage() {
   const otpForm = useForm<OtpInput>({ resolver: zodResolver(otpSchema) });
 
   const onDetails = detailsForm.handleSubmit(async (values) => {
-    const res = await signup.mutateAsync(values);
-    setWorkspaceId(res.workspaceId);
+    try {
+      const res = await signup.mutateAsync(values);
+      setEmail(values.email);
+      setWorkspaceId(res.workspaceId);
+    } catch {
+      // Swallowed: React Query handles errors in UI state
+    }
   });
 
   const onOtp = otpForm.handleSubmit(async (values) => {
-    if (!workspaceId) return;
-    await verify.mutateAsync({ workspaceId, otp: values.otp });
-    router.push("/dashboard");
+    if (!email) return;
+    try {
+      await verify.mutateAsync({ email, otp: values.otp });
+      toast("Workspace activated successfully! Sending your login code...", "success");
+      localStorage.setItem("redirectToSettings", "true");
+      
+      const pwd = detailsForm.getValues("password") || "";
+      router.push(`/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(pwd)}&autoSubmit=true`);
+    } catch {
+      // Swallowed: React Query handles errors in UI state
+    }
   });
+
+  if (!mounted) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-ink-950 p-4">
+        <div className="w-full max-w-md animate-pulse rounded-2xl border border-white/5 bg-ink-900 p-8 h-[340px]" />
+      </div>
+    );
+  }
 
   if (workspaceId) {
     return (
@@ -61,6 +91,7 @@ export default function SignupPage() {
       <form onSubmit={onDetails} className="space-y-4">
         <TextField label="Workspace name" placeholder="Acme Fintech" error={detailsForm.formState.errors.name?.message} {...detailsForm.register("name")} />
         <TextField label="Work email" type="email" placeholder="you@company.com" error={detailsForm.formState.errors.email?.message} {...detailsForm.register("email")} />
+        <TextField label="Password" type="password" placeholder="••••••••" error={detailsForm.formState.errors.password?.message} {...detailsForm.register("password")} />
         <button
           type="submit"
           disabled={signup.isPending}
