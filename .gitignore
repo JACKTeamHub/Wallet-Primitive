@@ -11,8 +11,6 @@ build/
 coverage/
 
 # Environment variables
-.env
-.env.*
 !.env.example
 
 # Logs
@@ -35,7 +33,6 @@ pnpm-debug.log*
 .vercel/
 
 # IDEs
-.vscode/
 .idea/
 
 # OS files
@@ -46,3 +43,4 @@ Thumbs.db
 *.pid
 *.seed
 *.pid.lock
+config.bat

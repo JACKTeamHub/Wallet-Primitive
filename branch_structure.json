@@ -1,0 +1,15 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "feature/implement-design",
+    "main"
+  ],
+  "parent": {
+    "feature/implement-design": "main",
+    "main": null
+  },
+  "order": [
+    "main",
+    "feature/implement-design"
+  ]
+}
